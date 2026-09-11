@@ -1,6 +1,6 @@
 # humiair
 
-A new Flutter project.
+IOT based Humidifier 
 
 ## Getting Started
 
