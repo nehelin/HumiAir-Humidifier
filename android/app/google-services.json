@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "962698179616",
+    "project_id": "humiair-humidifier",
+    "storage_bucket": "humiair-humidifier.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:962698179616:android:1eaa7d53ef9e9539887845",
+        "android_client_info": {
+          "package_name": "com.humidifier.HumiAir"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "962698179616-i9vmi4kivl7on6gttfcg51v344pph16g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.humidifier.HumiAir",
+            "certificate_hash": "07baf93a77c326054dc1f4f6d184fe7a8046d496"
+          }
+        },
+        {
+          "client_id": "962698179616-jd46irdt0lho38tj2fg7vg6bgm67jnh1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDuc4rnzo9BZFBR35qiNx7GKVu2xROwsmk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "962698179616-jd46irdt0lho38tj2fg7vg6bgm67jnh1.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "962698179616-7r2r9hld996onnh8cf513a3ttuj0uduk.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.humidifier.HumiAir"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,34 @@
+{
+  "rules": {
+    "devices": {
+      "$deviceId": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "status": {
+          "current": {
+            ".read": "auth != null",
+            ".write": "auth != null"
+          }
+        },
+        "settings": {
+          "thresholds": {
+            ".read": "auth != null",
+            ".write": "auth != null"
+          }
+        },
+        "history": {
+          "$entry": {
+            ".read": "auth != null",
+            ".write": "auth != null"
+          }
+        },
+        "notifications": {
+          "water_empty": {
+            ".read": "auth != null",
+            ".write": "auth != null"
+          }
+        }
+      }
+    }
+  }
+}

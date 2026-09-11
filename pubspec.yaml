@@ -1,0 +1,48 @@
+name: humiair
+description: "Smart Humidity Control with ESP8266 and Firebase."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # Firebase
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+  firebase_messaging: ^15.1.5
+
+  # Google Sign-In
+  google_sign_in: ^6.2.1
+
+  # Charts
+  fl_chart: ^0.70.0
+
+  # Local preferences
+  shared_preferences: ^2.3.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"
+  min_sdk_android: 21
+  background_color: "#E0F2FE"
+  foreground_color: "#ffffff"
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icon/icon.png

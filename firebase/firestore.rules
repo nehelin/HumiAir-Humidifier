@@ -1,0 +1,14 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // User-specific devices collection (requires user authentication)
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Devices collection (ESP8266 hardware & mobile app)
+    match /devices/{deviceId}/{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
