@@ -305,8 +305,7 @@ void sendCloudHistory() {
     json += "\"humidity\":{\"doubleValue\":" + String(lastHumidity, 1) + "},";
     json += "\"temperature\":{\"doubleValue\":" + String(lastTemperature, 1) + "},";
     json += "\"mistOn\":{\"booleanValue\":" + String(mistMakerState ? "true" : "false") + "},";
-    json += "\"waterEmpty\":{\"booleanValue\":" + String(waterEmpty ? "true" : "false") + "},";
-    json += "\"timestamp\":{\"integerValue\":\"" + String(millis()) + "\"}";
+    json += "\"waterEmpty\":{\"booleanValue\":" + String(waterEmpty ? "true" : "false") + "}";
     json += "}}";
 
     https.POST(json);
@@ -395,28 +394,7 @@ void loop() {
       lastTemperature = t;
     }
 
-    // Multi-sample filtering & hysteresis debouncing (prevents water ripple flicker)
-    int emptyVotes = 0;
-    for (int i = 0; i < 5; i++) {
-      if (digitalRead(FLOAT_PIN) == LOW) emptyVotes++;
-      delay(3);
-    }
-    bool rawEmpty = (emptyVotes >= 3);
-
-    static int consecutiveCount = 0;
-    static bool lastCandidate = false;
-
-    if (rawEmpty == lastCandidate) {
-      consecutiveCount++;
-      // Require 2 consecutive stable read cycles (4 seconds) to confirm state change
-      if (consecutiveCount >= 2) {
-        waterEmpty = rawEmpty;
-      }
-    } else {
-      lastCandidate = rawEmpty;
-      consecutiveCount = 1;
-    }
-
+    waterEmpty = (digitalRead(FLOAT_PIN) == LOW);
     digitalWrite(LED_PIN, waterEmpty ? HIGH : LOW);
 
     // Mist maker logic based strictly on user configured thresholds
