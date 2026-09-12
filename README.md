@@ -1,6 +1,6 @@
 # HumiAir - Smart Humidifier
 
-[![Download APK](https://img.shields.io/badge/Download-Android%20APK-brightgreen?logo=android&style=for-the-badge)](https://github.com/nehelin/HumiAir-Humidifier/releases/latest/download/HumiAir.apk)
+[![Download APK](https://img.shields.io/badge/Download-Android%20APK-brightgreen?logo=android&style=for-the-badge)](https://github.com/nehelin/HumiAir-Humidifier/releases/download/v1.0.0/HumiAir.apk)
 [![Flutter](https://img.shields.io/badge/Flutter-v3.44.8-blue?logo=flutter&style=for-the-badge)](https://flutter.dev)
 [![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange?logo=firebase&style=for-the-badge)](https://firebase.google.com)
 
@@ -13,7 +13,7 @@
 Anyone can directly download and install this app on an Android phone in 3 easy steps:
 
 1. **Download the APK:**  
-   Click here to download **[Download HumiAir APK](https://github.com/nehelin/HumiAir-Humidifier/releases/latest/download/HumiAir.apk)** (or go to [Releases](https://github.com/nehelin/HumiAir-Humidifier/releases)).
+   Click here to download **[Download HumiAir APK (Direct Link)](https://github.com/nehelin/HumiAir-Humidifier/releases/download/v1.0.0/HumiAir.apk)** (or visit the **[v1.0.0 Release Page](https://github.com/nehelin/HumiAir-Humidifier/releases/tag/v1.0.0)**).
 2. **Open the downloaded file:**  
    Tap `HumiAir.apk` on your phone's notification bar or Downloads folder.
 3. **Install:**  
