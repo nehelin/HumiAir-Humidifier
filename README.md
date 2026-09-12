@@ -8,12 +8,12 @@
 
 ---
 
-## 📱 How to Install the App (No Coding / No Android Studio Required!)
+## How to Install the App (No Coding / No Android Studio Required!)
 
 Anyone can directly download and install this app on an Android phone in 3 easy steps:
 
 1. **Download the APK:**  
-   Click here to download 👉 **[Download HumiAir APK](https://github.com/nehelin/HumiAir-Humidifier/releases/latest/download/HumiAir.apk)** (or go to [Releases](https://github.com/nehelin/HumiAir-Humidifier/releases)).
+   Click here to download **[Download HumiAir APK](https://github.com/nehelin/HumiAir-Humidifier/releases/latest/download/HumiAir.apk)** (or go to [Releases](https://github.com/nehelin/HumiAir-Humidifier/releases)).
 2. **Open the downloaded file:**  
    Tap `HumiAir.apk` on your phone's notification bar or Downloads folder.
 3. **Install:**  
@@ -22,9 +22,9 @@ Anyone can directly download and install this app on an Android phone in 3 easy 
 
 ---
 
-## ✨ Key Features
-- 📊 **Real-time Live Monitoring:** Live humidity, temperature, water level, and mist status updated every 5 seconds.
-- 🎯 **Target Thresholds:** Set lower & upper humidity limits directly from the app; your ESP8266 humidifier controls mist automatically.
-- 📈 **Sensor History & Charts:** View sensor trends over 1h, 6h, 24h, and 7d with clear date & time timestamps on the X-axis.
-- ⏱️ **Daily Runtime Breakdown:** Automatically calculates and displays how many hours and minutes the humidifier was active each day.
-- 🌐 **Seamless Wi-Fi Setup:** Visual Wi-Fi setup on OLED display; easily reconnect to any new Wi-Fi network anytime.
+## Key Features
+-  **Real-time Live Monitoring:** Live humidity, temperature, water level, and mist status updated every 5 seconds.
+-  **Target Thresholds:** Set lower & upper humidity limits directly from the app; your ESP8266 humidifier controls mist automatically.
+-  **Sensor History & Charts:** View sensor trends over 1h, 6h, 24h, and 7d with clear date & time timestamps on the X-axis.
+-  **Daily Runtime Breakdown:** Automatically calculates and displays how many hours and minutes the humidifier was active each day.
+-  **Seamless Wi-Fi Setup:** Visual Wi-Fi setup on OLED display; easily reconnect to any new Wi-Fi network anytime.
