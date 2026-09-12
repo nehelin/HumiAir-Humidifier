@@ -59,7 +59,22 @@ class AuthService {
     } on FirebaseAuthException catch (e) {
       return _friendlyError(e.code);
     } catch (e) {
+      final errStr = e.toString();
+      if (errStr.contains('10') || errStr.contains('DEVELOPER_ERROR')) {
+        return 'Google sign-in configuration error: SHA-1 fingerprint needs to be added in Firebase Console.';
+      }
       return 'Google sign-in failed: $e';
+    }
+  }
+
+  Future<String?> resetPassword(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      return null;
+    } on FirebaseAuthException catch (e) {
+      return _friendlyError(e.code);
+    } catch (e) {
+      return 'Failed to send password reset email: $e';
     }
   }
 
@@ -75,7 +90,7 @@ class AuthService {
       case 'wrong-password':
         return 'Incorrect password.';
       case 'email-already-in-use':
-        return 'This email is already registered.';
+        return 'This email is already registered. Please click "Sign In" below to log in.';
       case 'weak-password':
         return 'Password should be at least 6 characters.';
       case 'invalid-email':
@@ -83,9 +98,9 @@ class AuthService {
       case 'account-exists-with-different-credential':
         return 'An account already exists with this email using a different sign-in method.';
       case 'invalid-credential':
-        return 'Invalid Google credentials. Please try again.';
+        return 'Invalid credentials. Please check your email/password or try again.';
       case 'operation-not-allowed':
-        return 'Google sign-in is not enabled. Please contact support.';
+        return 'Google sign-in is not enabled in Firebase Console.';
       case 'API_NOT_CONNECTED':
         return 'Google Play services not available. Please update Google Play services.';
       case 'SIGN_IN_FAILED':
@@ -95,7 +110,7 @@ class AuthService {
       case 'NETWORK_ERROR':
         return 'Network error. Please check your internet connection.';
       case 'DEVELOPER_ERROR':
-        return 'Developer error. Please make sure SHA-1 fingerprint is added in Firebase Console.';
+        return 'Developer error: SHA-1 fingerprint missing in Firebase Console.';
       default:
         if (code.contains('10')) {
           return 'Configuration error: Please add SHA-1 fingerprint in Firebase Console and download updated google-services.json.';

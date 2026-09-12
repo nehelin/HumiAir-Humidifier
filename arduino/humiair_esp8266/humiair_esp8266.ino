@@ -452,20 +452,22 @@ void loop() {
     }
   }
 
-  // 2. Cloud Operations (Staggered non-blocking)
+  // 2. Cloud Operations (independent timed tasks)
   if (WiFi.status() == WL_CONNECTED) {
     // Send live data to Mobile App (every 5 seconds)
     if (now - lastStatusWrite >= STATUS_WRITE_MS) {
       lastStatusWrite = now;
       sendCloudStatus();
     }
+
     // Fetch user target threshold from App (every 10 seconds)
-    else if (now - lastThresholdFetch >= THRESHOLD_POLL_MS) {
+    if (now - lastThresholdFetch >= THRESHOLD_POLL_MS) {
       lastThresholdFetch = now;
       fetchCloudThresholds();
     }
+
     // Log history for charts (every 60 seconds)
-    else if (now - lastHistoryLog >= HISTORY_LOG_MS) {
+    if (now - lastHistoryLog >= HISTORY_LOG_MS) {
       lastHistoryLog = now;
       sendCloudHistory();
     }
