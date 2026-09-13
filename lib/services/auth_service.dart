@@ -3,7 +3,15 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  // Web Client ID (client_type: 3 in google-services.json) required for obtaining idToken on Android
+  static const String _webClientId =
+      '962698179616-jd46irdt0lho38tj2fg7vg6bgm67jnh1.apps.googleusercontent.com';
+
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId: _webClientId,
+    scopes: ['email', 'profile'],
+  );
 
   User? get currentUser => _auth.currentUser;
 
@@ -33,11 +41,7 @@ class AuthService {
 
   Future<String?> signInWithGoogle() async {
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn(
-        scopes: ['email', 'profile'],
-      );
-
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         return 'Sign-in cancelled.';
       }
