@@ -30,6 +30,28 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <EEPROM.h>
+#include <time.h>
+
+// ================= TIME (NTP) =================
+String getCurrentIsoTime() {
+  time_t now = time(nullptr);
+  if (now > 1000000000) {
+    char buf[32];
+    struct tm timeinfo;
+    gmtime_r(&now, &timeinfo);
+    strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", &timeinfo);
+    return String(buf);
+  }
+  return "";
+}
+
+unsigned long long getCurrentEpochMs() {
+  time_t now = time(nullptr);
+  if (now > 1000000000) {
+    return (unsigned long long)now * 1000ULL;
+  }
+  return 0;
+}
 
 // ================= CONFIG =================
 #define DHTPIN         D4
@@ -213,6 +235,13 @@ void sendCloudStatus() {
     json += "\"temperature\":{\"doubleValue\":" + String(lastTemperature, 1) + "},";
     json += "\"mistOn\":{\"booleanValue\":" + String(mistMakerState ? "true" : "false") + "},";
     json += "\"waterEmpty\":{\"booleanValue\":" + String(waterEmpty ? "true" : "false") + "}";
+
+    String isoTime = getCurrentIsoTime();
+    unsigned long long epochMs = getCurrentEpochMs();
+    if (isoTime.length() > 0) {
+      json += ",\"updatedAt\":{\"timestampValue\":\"" + isoTime + "\"}";
+      json += ",\"lastSeen\":{\"integerValue\":\"" + String(epochMs) + "\"}";
+    }
     json += "}}";
 
     int code = https.PATCH(json);
@@ -306,6 +335,11 @@ void sendCloudHistory() {
     json += "\"temperature\":{\"doubleValue\":" + String(lastTemperature, 1) + "},";
     json += "\"mistOn\":{\"booleanValue\":" + String(mistMakerState ? "true" : "false") + "},";
     json += "\"waterEmpty\":{\"booleanValue\":" + String(waterEmpty ? "true" : "false") + "}";
+
+    String isoTime = getCurrentIsoTime();
+    if (isoTime.length() > 0) {
+      json += ",\"timestamp\":{\"timestampValue\":\"" + isoTime + "\"}";
+    }
     json += "}}";
 
     https.POST(json);
@@ -366,6 +400,11 @@ void setup() {
     Serial.println("WiFi connected successfully.");
     Serial.print("IP Address: ");
     Serial.println(WiFi.localIP());
+
+    // Configure NTP time synchronization for accurate cloud timestamps
+    configTime(0, 0, "pool.ntp.org", "time.google.com");
+    Serial.println("NTP time synchronization initiated.");
+
     // Initial fetch from cloud
     fetchCloudThresholds();
   } else {

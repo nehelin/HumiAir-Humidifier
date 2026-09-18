@@ -94,6 +94,8 @@ class _ChartsScreenState extends State<ChartsScreen> {
     }
   }
 
+  int get _mistActiveMinutes => _mistSpots.where((s) => s.y > 0.5).length;
+
   void _processSnapshot(QuerySnapshot snapshot) {
     final hum = <FlSpot>[];
     final temp = <FlSpot>[];
@@ -101,6 +103,7 @@ class _ChartsScreenState extends State<ChartsScreen> {
 
     final docs = snapshot.docs;
     final nowMs = DateTime.now().millisecondsSinceEpoch.toDouble();
+    final cutoffMs = nowMs - (_range.hours * 3600 * 1000.0);
 
     for (int i = 0; i < docs.length; i++) {
       final doc = docs[i];
@@ -114,7 +117,11 @@ class _ChartsScreenState extends State<ChartsScreen> {
         final parsed = DateTime.tryParse(rawTs);
         if (parsed != null) ts = parsed.millisecondsSinceEpoch.toDouble();
       } else if (rawTs is num) {
-        ts = rawTs.toDouble();
+        if (rawTs < 10000000000) {
+          ts = rawTs * 1000.0;
+        } else {
+          ts = rawTs.toDouble();
+        }
       }
 
       if (ts == null) {
@@ -124,6 +131,11 @@ class _ChartsScreenState extends State<ChartsScreen> {
         } else {
           ts = nowMs - ((docs.length - 1 - i) * 60000.0);
         }
+      }
+
+      // Filter out readings that fall outside the selected time window
+      if (ts < cutoffMs) {
+        continue;
       }
 
       final h = (data['humidity'] as num?)?.toDouble();
@@ -384,17 +396,24 @@ class _ChartsScreenState extends State<ChartsScreen> {
                   ),
               ],
             ),
-            if (spots.isNotEmpty && !isBinary) ...[
+            if (spots.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Row(
-                children: [
-                  _statChip(Tr.min, '${minVal!.toStringAsFixed(1)}$unit', color),
-                  const SizedBox(width: 8),
-                  _statChip(Tr.avg, '${avgVal!.toStringAsFixed(1)}$unit', color),
-                  const SizedBox(width: 8),
-                  _statChip(Tr.max, '${maxVal!.toStringAsFixed(1)}$unit', color),
-                ],
-              ),
+              if (!isBinary)
+                Row(
+                  children: [
+                    _statChip(Tr.min, '${minVal!.toStringAsFixed(1)}$unit', color),
+                    const SizedBox(width: 8),
+                    _statChip(Tr.avg, '${avgVal!.toStringAsFixed(1)}$unit', color),
+                    const SizedBox(width: 8),
+                    _statChip(Tr.max, '${maxVal!.toStringAsFixed(1)}$unit', color),
+                  ],
+                )
+              else
+                Row(
+                  children: [
+                    _statChip(Tr.totalMistRuntime, Tr.formatRuntime(_mistActiveMinutes), color),
+                  ],
+                ),
             ],
             const SizedBox(height: 14),
             AspectRatio(
@@ -404,6 +423,32 @@ class _ChartsScreenState extends State<ChartsScreen> {
                   minY: minY,
                   maxY: maxY,
                   clipData: const FlClipData.all(),
+                  lineTouchData: LineTouchData(
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipColor: (_) =>
+                          Colors.blue.shade900.withValues(alpha: 0.9),
+                      getTooltipItems: (touchedSpots) {
+                        return touchedSpots.map((spot) {
+                          final dt = DateTime.fromMillisecondsSinceEpoch(
+                              spot.x.toInt());
+                          final timeStr =
+                              '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+                          final dateStr = '${dt.day}/${dt.month}';
+                          final valStr = isBinary
+                              ? (spot.y > 0.5 ? 'Mist ON' : 'Mist OFF')
+                              : '${spot.y.toStringAsFixed(1)}$unit';
+                          return LineTooltipItem(
+                            '$valStr\n$dateStr $timeStr',
+                            const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 10,
+                            ),
+                          );
+                        }).toList();
+                      },
+                    ),
+                  ),
                   gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,
@@ -430,8 +475,40 @@ class _ChartsScreenState extends State<ChartsScreen> {
                         ),
                       ),
                     ),
-                    bottomTitles:
-                        AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: spots.length > 1,
+                        reservedSize: 22,
+                        interval: spots.length > 1
+                            ? ((spots.last.x - spots.first.x) / 3).clamp(1.0, double.infinity)
+                            : 1.0,
+                        getTitlesWidget: (v, meta) {
+                          if (v == meta.min || v == meta.max) {
+                            return const SizedBox.shrink();
+                          }
+                          final dt = DateTime.fromMillisecondsSinceEpoch(v.toInt());
+                          String text;
+                          if (_range == ChartRange.h1) {
+                            text = '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+                          } else if (_range == ChartRange.h6 || _range == ChartRange.h24) {
+                            text = '${dt.hour.toString().padLeft(2, '0')}:00';
+                          } else {
+                            final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                            text = '${dt.day} ${months[dt.month - 1]}';
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              text,
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: Colors.blue.shade400,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                     topTitles:
                         AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     rightTitles:

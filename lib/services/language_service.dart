@@ -71,6 +71,9 @@ class Tr {
   static String get waterTankLowNotice => _isBn
       ? 'পানির ট্যাঙ্ক খালি! অনুগ্রহ করে পানি পূরণ করুন।'
       : 'Water tank is empty! Please refill.';
+  static String get deviceOfflineNotice => _isBn
+      ? 'ডিভাইসটি বর্তমানে বন্ধ বা অফলাইনে আছে'
+      : 'Device is currently powered off or offline';
   static String get humidityThresholds =>
       _isBn ? 'আর্দ্রতা থ্রেশহোল্ড' : 'Humidity Thresholds';
   static String get thresholdRangeSubtitle =>
@@ -175,6 +178,23 @@ class Tr {
   static String readingsCount(int count, String range) => _isBn
       ? '$count টি রিডিং · বিগত $range'
       : '$count readings · last $range';
+  static String get totalMistRuntime =>
+      _isBn ? 'মোট চলার সময়' : 'Total Active Time';
+  static String formatRuntime(int minutes) {
+    final h = minutes ~/ 60;
+    final m = minutes % 60;
+    if (_isBn) {
+      if (h > 0) {
+        return '$h ঘণ্টা $m মি.';
+      }
+      return '$m মিনিট';
+    } else {
+      if (h > 0) {
+        return '${h}h ${m}m';
+      }
+      return '${m}m';
+    }
+  }
 
   // Profile & Settings Screen
   static String get profileAndSettings =>

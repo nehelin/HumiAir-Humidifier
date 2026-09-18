@@ -111,17 +111,23 @@ class FirestoreService {
   // ── Sensor history ────────────────────────────────────────────────────────
 
   /// Returns sensor readings up to [limit] documents.
-  Stream<QuerySnapshot> streamSensorData(String deviceId, {int limit = 100}) {
+  Stream<QuerySnapshot> streamSensorData(String deviceId, {int limit = 1500}) {
     return _sensorCol(deviceId)
         .limit(limit)
         .snapshots();
   }
 
-  /// Returns sensor readings within the last [hours] hours.
+  /// Returns sensor readings sized for the requested [hours] duration.
+  /// (1h -> 120, 6h -> 450, 24h -> 1500, 7d -> 2500)
   Stream<QuerySnapshot> streamSensorDataSince(String deviceId,
       {required int hours}) {
+    final limit = hours <= 1
+        ? 120
+        : (hours <= 6
+            ? 450
+            : (hours <= 24 ? 1500 : 2500));
     return _sensorCol(deviceId)
-        .limit(200)
+        .limit(limit)
         .snapshots();
   }
 

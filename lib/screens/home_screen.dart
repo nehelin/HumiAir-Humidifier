@@ -23,6 +23,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Per-selected-device live data
   Map<String, dynamic>? _liveData;
+  DateTime? _lastSnapshotReceived;
+  Timer? _offlineCheckTimer;
   StreamSubscription<DocumentSnapshot>? _statusSub;
 
   // Threshold editing
@@ -38,10 +40,19 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
     _firestoreService = FirestoreService(userId: uid);
+
+    // Periodically re-evaluate online/offline status so UI switches promptly
+    // when physical power is cut on the humidifier
+    _offlineCheckTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (mounted && _liveData != null) {
+        setState(() {});
+      }
+    });
   }
 
   @override
   void dispose() {
+    _offlineCheckTimer?.cancel();
     _statusSub?.cancel();
     _thresholdSub?.cancel();
     _lowerCtrl.dispose();
@@ -97,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _thresholdSub?.cancel();
     _subscribedDeviceId = deviceId;
     _thresholdLoaded = false;
-    _waterBannerDismissed = false;
+    _lastSnapshotReceived = null;
 
     _statusSub = _firestoreService.streamLiveStatus(deviceId).listen((snap) {
       if (!mounted) return;
@@ -106,6 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       setState(() {
         _liveData = data;
+        _lastSnapshotReceived = DateTime.now();
         // When water is refilled, reset dismissal so future alerts can show
         if (!isWaterEmpty) {
           _waterBannerDismissed = false;
@@ -127,6 +139,37 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     });
+  }
+
+  bool _isDeviceOnline(Map<String, dynamic>? data) {
+    if (data == null) return false;
+
+    // 1. Check updatedAt or lastSeen timestamp from ESP8266
+    DateTime? deviceTime;
+    final rawUpdated = data['updatedAt'];
+    if (rawUpdated is Timestamp) {
+      deviceTime = rawUpdated.toDate();
+    } else if (rawUpdated is String) {
+      deviceTime = DateTime.tryParse(rawUpdated);
+    } else if (data['lastSeen'] is num) {
+      deviceTime = DateTime.fromMillisecondsSinceEpoch(
+          (data['lastSeen'] as num).toInt());
+    }
+
+    if (deviceTime != null) {
+      final diff =
+          DateTime.now().toUtc().difference(deviceTime.toUtc()).inSeconds.abs();
+      return diff <= 15;
+    }
+
+    // 2. Fallback: if data has no timestamp yet (legacy), rely on recent stream reception
+    if (_lastSnapshotReceived != null) {
+      final elapsed =
+          DateTime.now().difference(_lastSnapshotReceived!).inSeconds;
+      return elapsed <= 15;
+    }
+
+    return false;
   }
 
   Future<void> _saveThresholds() async {
@@ -355,7 +398,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final device = _selectedIndex < devices.length
         ? devices[_selectedIndex]
         : devices.first;
-    final isWaterEmpty = _liveData?['waterEmpty'] == true;
+    final isDeviceOnline = _isDeviceOnline(_liveData);
+    final isWaterEmpty = isDeviceOnline && _liveData?['waterEmpty'] == true;
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -430,10 +474,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildLiveCard(DeviceModel device) {
     final data = _liveData;
+    final isOnline = _isDeviceOnline(data);
     final humidity = (data?['humidity'] as num?)?.toDouble();
     final temp = (data?['temperature'] as num?)?.toDouble();
-    final mistOn = data?['mistOn'] == true;
-    final waterEmpty = data?['waterEmpty'] == true;
+    final mistOn = isOnline && data?['mistOn'] == true;
+    final waterEmpty = isOnline && data?['waterEmpty'] == true;
     final hasData = data != null;
 
     return Container(
@@ -475,9 +520,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                   decoration: BoxDecoration(
-                    color: hasData
+                    color: isOnline
                         ? Colors.white.withValues(alpha: 0.2)
-                        : Colors.white.withValues(alpha: 0.1),
+                        : (hasData
+                            ? Colors.black.withValues(alpha: 0.25)
+                            : Colors.white.withValues(alpha: 0.1)),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -488,14 +535,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         height: 6,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: hasData
+                          color: isOnline
                               ? const Color(0xFF4ADE80)
-                              : Colors.white38,
+                              : (hasData
+                                  ? const Color(0xFFF87171)
+                                  : Colors.white38),
                         ),
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        hasData ? Tr.online : Tr.waiting,
+                        isOnline
+                            ? Tr.online
+                            : (hasData ? Tr.offline : Tr.waiting),
                         style: const TextStyle(
                             color: Colors.white,
                             fontSize: 11,
@@ -581,6 +632,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       label: Tr.waterTankLow,
                       active: false,
                       isWarning: true,
+                    ),
+                  if (!isOnline && hasData)
+                    _buildStatusBadge(
+                      icon: Icons.power_off_rounded,
+                      label: Tr.deviceOfflineNotice,
+                      active: false,
+                      isWarning: false,
                     ),
                 ],
               ),
