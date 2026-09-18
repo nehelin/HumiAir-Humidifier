@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -140,42 +141,85 @@ class DevicesScreen extends StatelessWidget {
 
 /// ── Individual Device Card ────────────────────────────────────────────────
 
-class _DeviceCard extends StatelessWidget {
+class _DeviceCard extends StatefulWidget {
   final DeviceModel device;
   final FirestoreService service;
 
   const _DeviceCard({required this.device, required this.service});
 
   @override
+  State<_DeviceCard> createState() => _DeviceCardState();
+}
+
+class _DeviceCardState extends State<_DeviceCard> {
+  Timer? _timer;
+  DateTime? _lastLiveServerTime; // last time a real server push arrived
+  Map<String, dynamic>? _cachedData;
+
+  @override
+  void initState() {
+    super.initState();
+    // Periodically re-evaluate online status so UI updates when device goes offline
+    _timer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  bool _isOnline(Map<String, dynamic>? data, bool isLiveFromServer) {
+    if (data == null) return false;
+
+    // 1. New firmware: use updatedAt / lastSeen timestamp
+    DateTime? deviceTime;
+    final rawUpdated = data['updatedAt'];
+    if (rawUpdated is Timestamp) {
+      deviceTime = rawUpdated.toDate();
+    } else if (rawUpdated is String && rawUpdated.isNotEmpty) {
+      deviceTime = DateTime.tryParse(rawUpdated);
+    } else if (data['lastSeen'] is num) {
+      deviceTime = DateTime.fromMillisecondsSinceEpoch(
+          (data['lastSeen'] as num).toInt());
+    }
+
+    if (deviceTime != null) {
+      return DateTime.now().toUtc().difference(deviceTime.toUtc()).inSeconds.abs() <= 20;
+    }
+
+    // 2. Legacy firmware fallback: rely on last live server push time
+    if (_lastLiveServerTime != null) {
+      return DateTime.now().difference(_lastLiveServerTime!).inSeconds <= 20;
+    }
+
+    return false;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
-      stream: service.streamLiveStatus(device.deviceId),
+      stream: widget.service.streamLiveStatus(widget.device.deviceId),
       builder: (context, snap) {
         final data = snap.data?.data() as Map<String, dynamic>?;
         final isLiveFromServer = snap.hasData && !(snap.data?.metadata.isFromCache ?? true);
 
-        DateTime? lastSeen;
-        final rawUpdated = data?['updatedAt'];
-        if (rawUpdated is Timestamp) {
-          lastSeen = rawUpdated.toDate();
-        } else if (rawUpdated is String && (rawUpdated).isNotEmpty) {
-          lastSeen = DateTime.tryParse(rawUpdated);
-        } else if (data?['lastSeen'] is num) {
-          lastSeen = DateTime.fromMillisecondsSinceEpoch(
-              (data!['lastSeen'] as num).toInt());
+        // Track when we last received a real server push (not cache)
+        if (isLiveFromServer && data != null) {
+          _lastLiveServerTime = DateTime.now();
+          _cachedData = data;
         }
 
-        final isOnline = snap.hasData &&
-            snap.data!.exists &&
-            data != null &&
-            (lastSeen != null
-                ? DateTime.now().toUtc().difference(lastSeen.toUtc()).inSeconds.abs() <= 20
-                : isLiveFromServer); // fallback: only online if live server push
+        final displayData = data ?? _cachedData;
+        final isOnline = snap.hasData && snap.data!.exists && _isOnline(displayData, isLiveFromServer);
 
-        final humidity = (data?['humidity'] as num?)?.toDouble();
-        final temp = (data?['temperature'] as num?)?.toDouble();
-        final mistOn = isOnline && data?['mistOn'] == true;
-        final waterEmpty = isOnline && data?['waterEmpty'] == true;
+        final humidity = (displayData?['humidity'] as num?)?.toDouble();
+        final temp = (displayData?['temperature'] as num?)?.toDouble();
+        final mistOn = isOnline && displayData?['mistOn'] == true;
+        final waterEmpty = isOnline && displayData?['waterEmpty'] == true;
+
 
         return Container(
           decoration: BoxDecoration(
@@ -195,8 +239,8 @@ class _DeviceCard extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (_) => ChartsScreen(
-                  deviceId: device.deviceId,
-                  deviceName: device.name,
+                  deviceId: widget.device.deviceId,
+                  deviceName: widget.device.name,
                 ),
               ),
             ),
@@ -229,7 +273,7 @@ class _DeviceCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              device.name,
+                              widget.device.name,
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
@@ -238,11 +282,11 @@ class _DeviceCard extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              device.room.isEmpty
+                              widget.device.room.isEmpty
                                   ? (LanguageService.instance.isBengali
                                       ? 'লোকেশন নেই'
                                       : 'No location')
-                                  : device.room,
+                                  : widget.device.room,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.blue.shade400,
@@ -372,7 +416,7 @@ class _DeviceCard extends StatelessWidget {
                       const SizedBox(width: 5),
                       Expanded(
                         child: Text(
-                          device.deviceId,
+                          widget.device.deviceId,
                           style: TextStyle(
                               fontSize: 11,
                               color: Colors.blue.shade400,
@@ -383,7 +427,7 @@ class _DeviceCard extends StatelessWidget {
                       GestureDetector(
                         onTap: () {
                           Clipboard.setData(
-                              ClipboardData(text: device.deviceId));
+                              ClipboardData(text: widget.device.deviceId));
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(Tr.copied),
@@ -406,7 +450,7 @@ class _DeviceCard extends StatelessWidget {
                       // Delete button
                       GestureDetector(
                         onTap: () =>
-                            _confirmDelete(context, device, service),
+                            _confirmDelete(context, widget.device, widget.service),
                         child: Padding(
                           padding: const EdgeInsets.all(4),
                           child: Icon(Icons.delete_outline_rounded,
