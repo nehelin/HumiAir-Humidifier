@@ -152,11 +152,13 @@ class _DeviceCard extends StatelessWidget {
       stream: service.streamLiveStatus(device.deviceId),
       builder: (context, snap) {
         final data = snap.data?.data() as Map<String, dynamic>?;
+        final isLiveFromServer = snap.hasData && !(snap.data?.metadata.isFromCache ?? true);
+
         DateTime? lastSeen;
         final rawUpdated = data?['updatedAt'];
         if (rawUpdated is Timestamp) {
           lastSeen = rawUpdated.toDate();
-        } else if (rawUpdated is String) {
+        } else if (rawUpdated is String && (rawUpdated).isNotEmpty) {
           lastSeen = DateTime.tryParse(rawUpdated);
         } else if (data?['lastSeen'] is num) {
           lastSeen = DateTime.fromMillisecondsSinceEpoch(
@@ -168,12 +170,12 @@ class _DeviceCard extends StatelessWidget {
             data != null &&
             (lastSeen != null
                 ? DateTime.now().toUtc().difference(lastSeen.toUtc()).inSeconds.abs() <= 20
-                : true);
+                : isLiveFromServer); // fallback: only online if live server push
 
         final humidity = (data?['humidity'] as num?)?.toDouble();
         final temp = (data?['temperature'] as num?)?.toDouble();
-        final mistOn = isOnline && data['mistOn'] == true;
-        final waterEmpty = isOnline && data['waterEmpty'] == true;
+        final mistOn = isOnline && data?['mistOn'] == true;
+        final waterEmpty = isOnline && data?['waterEmpty'] == true;
 
         return Container(
           decoration: BoxDecoration(

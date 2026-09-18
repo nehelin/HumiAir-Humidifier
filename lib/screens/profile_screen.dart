@@ -134,7 +134,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 4),
                   Text(
                     email,
                     style: TextStyle(
@@ -143,48 +143,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: uid));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(Tr.copied),
-                          backgroundColor: Colors.blue.shade600,
-                          behavior: SnackBarBehavior.floating,
-                          duration: const Duration(seconds: 2),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.copy_rounded,
-                              size: 12, color: Colors.white.withValues(alpha: 0.8)),
-                          const SizedBox(width: 5),
-                          Text(
-                            uid.length > 14
-                                ? 'UID: ${uid.substring(0, 12)}...'
-                                : 'UID: $uid',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontFamily: 'monospace',
-                              color: Colors.white.withValues(alpha: 0.85),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
                 ],
               ),
@@ -448,7 +406,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _infoRow(Icons.info_outline_rounded, Tr.appVersion, 'v2.0.0'),
+            _infoRow(Icons.info_outline_rounded, Tr.appVersion, 'v1.0.0'),
             const SizedBox(height: 10),
             const Divider(height: 1),
             const SizedBox(height: 10),

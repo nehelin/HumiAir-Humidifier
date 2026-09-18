@@ -115,10 +115,16 @@ class _HomeScreenState extends State<HomeScreen> {
       final data = snap.data() as Map<String, dynamic>?;
       final isWaterEmpty = (data != null && (data['waterEmpty'] ?? false) == true);
 
+      // isFromCache=true means no live server update received — device likely offline
+      // isFromCache=false means a real server push just arrived — device is online
+      final isLiveFromServer = !snap.metadata.isFromCache;
+
       setState(() {
         _liveData = data;
-        _lastSnapshotReceived = DateTime.now();
-        // When water is refilled, reset dismissal so future alerts can show
+        // Only update _lastSnapshotReceived when data actually comes from server
+        if (isLiveFromServer) {
+          _lastSnapshotReceived = DateTime.now();
+        }
         if (!isWaterEmpty) {
           _waterBannerDismissed = false;
         }
@@ -144,12 +150,12 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isDeviceOnline(Map<String, dynamic>? data) {
     if (data == null) return false;
 
-    // 1. Check updatedAt or lastSeen timestamp from ESP8266
+    // 1. Primary: check new firmware timestamps (updatedAt / lastSeen)
     DateTime? deviceTime;
     final rawUpdated = data['updatedAt'];
     if (rawUpdated is Timestamp) {
       deviceTime = rawUpdated.toDate();
-    } else if (rawUpdated is String) {
+    } else if (rawUpdated is String && rawUpdated.isNotEmpty) {
       deviceTime = DateTime.tryParse(rawUpdated);
     } else if (data['lastSeen'] is num) {
       deviceTime = DateTime.fromMillisecondsSinceEpoch(
@@ -159,14 +165,16 @@ class _HomeScreenState extends State<HomeScreen> {
     if (deviceTime != null) {
       final diff =
           DateTime.now().toUtc().difference(deviceTime.toUtc()).inSeconds.abs();
-      return diff <= 15;
+      return diff <= 20;
     }
 
-    // 2. Fallback: if data has no timestamp yet (legacy), rely on recent stream reception
+    // 2. Fallback for legacy firmware (no timestamps):
+    // Use _lastSnapshotReceived — only updated when server push arrives (not from cache).
+    // If last live server update was > 20s ago, device is considered offline.
     if (_lastSnapshotReceived != null) {
       final elapsed =
           DateTime.now().difference(_lastSnapshotReceived!).inSeconds;
-      return elapsed <= 15;
+      return elapsed <= 20;
     }
 
     return false;
