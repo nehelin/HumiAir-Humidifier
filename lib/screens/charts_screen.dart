@@ -125,14 +125,19 @@ class _ChartsScreenState extends State<ChartsScreen> {
       }
 
       if (ts == null) {
-        // No timestamp available — skip this reading to avoid showing it
-        // in the wrong time range. This happens with old firmware that
-        // didn't write timestamps. After flashing new firmware, real
-        // timestamps will be available and charts will work correctly.
-        continue;
+        final idNum = double.tryParse(doc.id);
+        if (idNum != null && idNum > 100000) {
+          ts = idNum;
+        } else {
+          // If reading has no timestamp (e.g. from older firmware), 
+          // spread them back in 1-minute intervals from the latest point
+          ts = nowMs - ((docs.length - 1 - i) * 60000.0);
+        }
       }
 
       // Filter out readings that fall outside the selected time window
+      // For legacy data without real timestamps, if it was computed relative,
+      // it will be included appropriately.
       if (ts < cutoffMs) {
         continue;
       }

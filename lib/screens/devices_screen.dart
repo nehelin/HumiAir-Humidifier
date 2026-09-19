@@ -153,25 +153,45 @@ class _DeviceCard extends StatefulWidget {
 
 class _DeviceCardState extends State<_DeviceCard> {
   Timer? _timer;
+  StreamSubscription<DocumentSnapshot>? _sub;
   DateTime? _lastLiveServerTime; // last time a real server push arrived
-  Map<String, dynamic>? _cachedData;
+  Map<String, dynamic>? _liveData;
+  bool _hasSnapshot = false;
+  bool _docExists = false;
 
   @override
   void initState() {
     super.initState();
+    _sub = widget.service.streamLiveStatus(widget.device.deviceId).listen((snap) {
+      if (!mounted) return;
+      final isLiveFromServer = !snap.metadata.isFromCache;
+      final data = snap.data() as Map<String, dynamic>?;
+      setState(() {
+        _hasSnapshot = true;
+        _docExists = snap.exists;
+        _liveData = data;
+        if (isLiveFromServer && data != null) {
+          _lastLiveServerTime = DateTime.now();
+        }
+      });
+    });
+
     // Periodically re-evaluate online status so UI updates when device goes offline
     _timer = Timer.periodic(const Duration(seconds: 3), (_) {
-      if (mounted) setState(() {});
+      if (mounted && _liveData != null) {
+        setState(() {});
+      }
     });
   }
 
   @override
   void dispose() {
+    _sub?.cancel();
     _timer?.cancel();
     super.dispose();
   }
 
-  bool _isOnline(Map<String, dynamic>? data, bool isLiveFromServer) {
+  bool _isOnline(Map<String, dynamic>? data) {
     if (data == null) return false;
 
     // 1. New firmware: use updatedAt / lastSeen timestamp
@@ -200,25 +220,13 @@ class _DeviceCardState extends State<_DeviceCard> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<DocumentSnapshot>(
-      stream: widget.service.streamLiveStatus(widget.device.deviceId),
-      builder: (context, snap) {
-        final data = snap.data?.data() as Map<String, dynamic>?;
-        final isLiveFromServer = snap.hasData && !(snap.data?.metadata.isFromCache ?? true);
+    final displayData = _liveData;
+    final isOnline = _hasSnapshot && _docExists && _isOnline(displayData);
 
-        // Track when we last received a real server push (not cache)
-        if (isLiveFromServer && data != null) {
-          _lastLiveServerTime = DateTime.now();
-          _cachedData = data;
-        }
-
-        final displayData = data ?? _cachedData;
-        final isOnline = snap.hasData && snap.data!.exists && _isOnline(displayData, isLiveFromServer);
-
-        final humidity = (displayData?['humidity'] as num?)?.toDouble();
-        final temp = (displayData?['temperature'] as num?)?.toDouble();
-        final mistOn = isOnline && displayData?['mistOn'] == true;
-        final waterEmpty = isOnline && displayData?['waterEmpty'] == true;
+    final humidity = (displayData?['humidity'] as num?)?.toDouble();
+    final temp = (displayData?['temperature'] as num?)?.toDouble();
+    final mistOn = isOnline && displayData?['mistOn'] == true;
+    final waterEmpty = isOnline && displayData?['waterEmpty'] == true;
 
 
         return Container(
@@ -340,8 +348,8 @@ class _DeviceCardState extends State<_DeviceCard> {
                     ],
                   ),
 
-                  // Live data row (only when online)
-                  if (isOnline) ...[
+                  // Live data row (show whenever data exists, mist is OFF if offline)
+                  if (displayData != null) ...[
                     const SizedBox(height: 12),
                     const Divider(height: 1),
                     const SizedBox(height: 12),
@@ -464,8 +472,6 @@ class _DeviceCardState extends State<_DeviceCard> {
             ),
           ),
         );
-      },
-    );
   }
 
   Widget _miniStat({
