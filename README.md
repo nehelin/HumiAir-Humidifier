@@ -1,6 +1,7 @@
 # HumiAir - Smart Humidifier
 
 [![Download APK](https://img.shields.io/badge/Download-Android%20APK-brightgreen?logo=android&style=for-the-badge)](https://github.com/nehelin/HumiAir-Humidifier/releases/download/v1.0.0/HumiAir.apk)
+[![Download iOS](https://img.shields.io/badge/Download-iOS%20IPA-black?logo=apple&style=for-the-badge)](https://github.com/nehelin/HumiAir-Humidifier/releases/download/v1.0.0/HumiAir.ipa)
 [![Flutter](https://img.shields.io/badge/Flutter-v3.44.8-blue?logo=flutter&style=for-the-badge)](https://flutter.dev)
 [![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange?logo=firebase&style=for-the-badge)](https://firebase.google.com)
 
@@ -10,8 +11,7 @@
 
 ## How to Install the App (No Coding / No Android Studio Required!)
 
-Anyone can directly download and install this app on an Android phone in 3 easy steps:
-
+### 🤖 Android:
 1. **Download the APK:**  
    Click here to download **[Download HumiAir APK (Direct Link)](https://github.com/nehelin/HumiAir-Humidifier/releases/download/v1.0.0/HumiAir.apk)** (or visit the **[v1.0.0 Release Page](https://github.com/nehelin/HumiAir-Humidifier/releases/tag/v1.0.0)**).
 2. **Open the downloaded file:**  
@@ -19,6 +19,12 @@ Anyone can directly download and install this app on an Android phone in 3 easy 
 3. **Install:**  
    Tap **Install** (if prompted, allow *"Install from this source"*).
 4. **Done!** Open the app, log in, and pair with your HumiAir device using the Device ID shown on the OLED screen.
+
+### 🍏 iOS (iPhone / iPad):
+1. **Download the IPA:**  
+   Click here to download **[Download HumiAir IPA (Direct Link)](https://github.com/nehelin/HumiAir-Humidifier/releases/download/v1.0.0/HumiAir.ipa)**.
+2. **Install on iPhone:**  
+   Install using any sideloading tool (such as **AltStore**, **Sideloadly**, or **Scarlet**) without needing a Mac.
 
 ---
 
